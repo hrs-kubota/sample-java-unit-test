@@ -2,27 +2,32 @@ package com.example.samplejavaunittest.domain.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class CooperationTextPolicyTest {
+public class CooperationTextPolicyUnavailableTagsTest {
 
+	private CooperationTextPolicy policy;
 	private static Method unavailableTagsMethod;
 	private static String column ="「プライバシーポリシー本文」";
-	private static String errorMessage = "半角の小なり ( < ) は <b>, <br> タグ以外の用途では使用しないでください。";
+	private static String errorMessage;
 
 	@BeforeEach
-	void before() throws NoSuchMethodException, SecurityException {
+	void before() throws NoSuchMethodException, SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+		policy = new CooperationTextPolicy();
 		unavailableTagsMethod = CooperationTextPolicy.class.getDeclaredMethod("unavailableTags", String.class, String.class);
 		unavailableTagsMethod.setAccessible(true);
+		Field errorMessageField = CooperationTextPolicy.class.getDeclaredField("MESSAGE_UNAVAILABLE_TAGS");
+        errorMessageField.setAccessible(true);
+        errorMessage = String.valueOf(errorMessageField.get(policy));
 	}
 
 	@Test
 	void 正常系_大なりを含まない() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列12345abcdeABCDE１２３４５ａｂｃｄｅＡＢＣＤＥ!\"#$%&'()-^\\@[;:],./=~|`{+*}>?_";
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -31,7 +36,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void 正常系_BRタグを含む() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<br>テスト用の文字列";
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -40,7 +44,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void 正常系_Bタグを含む() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<b>テスト</b>用の文字列";
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -49,7 +52,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void 正常系_BRタグとBタグを含む() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<br><b>テスト</b>用の文字列";
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -67,7 +69,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void 正常系_Bタグ終了が全角大なり() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<b>テスト＜/b>用の文字列";
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -76,7 +77,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void 正常系_BRタグが全角大なり() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列＜br>テスト用の文字列";
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -85,7 +85,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void 正常系_リアル() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = privacyPolicyText;
 		String expected = "";
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -94,7 +93,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_半角小なりのみ出現() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -103,7 +101,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ開始閉じ忘れ() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<bテスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -112,7 +109,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ終了閉じ忘れ() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列</bテスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -121,7 +117,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_BRタグ閉じ忘れ() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<brテスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -130,7 +125,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ開始に半角スペースが含まれる1() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列< b>テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -139,7 +133,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ開始に半角スペースが含まれる2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<b >テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -148,7 +141,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ終了に半角スペースが含まれる1() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列< /b>テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -157,7 +149,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ終了に半角スペースが含まれる2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列</ b>テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -166,7 +157,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ終了に半角スペースが含まれる3() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列</b >テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -184,7 +174,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_BRタグに半角スペースが含まれる2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<b r>テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -202,7 +191,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ開始に全角文字が含まれる1() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<ｂ>テスト</b>用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -220,7 +208,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ終了に全角文字が含まれる1() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<b>テスト</ｂ>用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -229,7 +216,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_Bタグ終了に全角文字が含まれる2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<b>テスト</b＞用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -247,7 +233,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_BRタグに全角文字が含まれる2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<bｒ>テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -256,7 +241,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_BRタグに全角文字が含まれる3() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<br＞テスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -265,7 +249,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_改行入り本文1() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<テスト用の文字列\r\nテスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -274,7 +257,6 @@ public class CooperationTextPolicyTest {
 
 	@Test
 	void バリデーションエラー_不完全なタグ_改行入り本文2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = "テスト用の文字列<テスト用の文字列\nテスト用の文字列";
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
@@ -282,8 +264,31 @@ public class CooperationTextPolicyTest {
 	}
 
 	@Test
+	void バリデーションエラー_エラー発生位置_文頭() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		String target = "<テスト用の文字列";
+		String expected = errorMessage;
+		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	void バリデーションエラー_エラー発生位置_文中() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		String target = "テスト用<の文字列";
+		String expected = errorMessage;
+		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	void バリデーションエラー_エラー発生位置_文末() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		String target = "テスト用の文字列<";
+		String expected = errorMessage;
+		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
+		assertEquals(expected, actual);
+	}
+
+	@Test
 	void バリデーションエラー_リアル() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		CooperationTextPolicy policy = new CooperationTextPolicy();
 		String target = privacyPolicyWithErrorText;
 		String expected = errorMessage;
 		String actual = (String)unavailableTagsMethod.invoke(policy, column, target);
